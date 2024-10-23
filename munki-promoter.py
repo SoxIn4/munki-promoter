@@ -339,8 +339,8 @@ def prep_all_promotions(config, munki_path, config_path):
 						pkginfo = plistlib.load(fp, fmt=None)
 						# prep individual pkginfo for promotion
 						for promotion in config["promotions"]:
-							promotion_targets = promotion.get('targeted_names', None)
-							promotion_exclusions = promotion.get('excluded_names', None)
+							promotion_targets = config["promotions"][promotion].get('targeted_names', None)
+							promotion_exclusions = config["promotions"][promotion].get('excluded_names', None)
 							exclusions = set(global_excluded).union(promotion_exclusions)
 							targets = set(global_targets).union(promotion_targets) - exclusions
 							promote_to, promote_from, days, custom_items = get_promotion_info(promotion, promotions, config, config_path)
