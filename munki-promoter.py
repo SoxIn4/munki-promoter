@@ -342,26 +342,21 @@ def prep_all_promotions(config, munki_path, config_path):
 							promotion_targets = config["promotions"][promotion].get('targeted_names', None)
 							promotion_exclusions = config["promotions"][promotion].get('excluded_names', None)
 
+							exclusions = {}
 							if global_excluded:
-								exclusions = set(global_excluded)
-								if promotion_exclusions:
-									exclusions = exclusions + promotion_exclusions
-							else:
-								exclusions = None if not promotion_exclusions else set(promotion_exclusions)
+								exclusions['global'] = set(global_excluded)
+							if promotion_exclusions:
+									exclusions['promotion'] = set(promotion_exclusions)
 
+							targets = {}
 							if global_targets:
-								targets = set(global_targets)
-								if promotion_targets:
-									targets = targets + promotion_targets
-								if exclusions:
-									targets = targets - exclusions
-							elif promotion_targets:
-								targets = set(promotion_targets)
-								if exclusions:
-									targets = targets - exclusions
-							else:
-								targets = None
+								targets['global'] = set(global_targets)
+							if promotion_targets:
+								targets['promotion'] = set(promotion_targets)
+
 							promote_to, promote_from, days, custom_items = get_promotion_info(promotion, promotions, config, config_path)
+							print(f"\n\n\n\nEXCLUSIONS: {exclusions}")
+							print(f"TARGETS: {targets}\n\n\n\n\n")
 							item_name, item_version, item_promotion, custom_promote_to = prep_item_for_promotion(pkginfo, promote_to, promote_from, days, custom_items, file, exclusions, targets)
 							if item_name: # would be None if not eligible for promotion
 								if not (promotion in names):
@@ -442,6 +437,25 @@ def prep_pkgsinfo_single_promotion(promote_to, promote_from, days, custom_items,
 			sys.exit(1)
 	return names, versions, custom_item_descriptions, promotions
 
+def is_valid_target(item_name, exclusions, targets):
+	valid = True
+	if item_name in exclusions.get('promotion', set()):
+		valid = False
+		print(f'\n\n######################### {item_name} NOT VALID - Promotion Exclusions #########################\n\n')
+	elif targets:
+		if item_name not in (targets.get('global', set()).union(targets.get('promotion', set()))):
+			valid = False
+			print(f'\n\n######################### {item_name} NOT VALID - Not in Targets #########################')
+			print(f'######################### Targets: {targets} #########################')
+			print(f'######################### Exclusions: {exclusions} #########################\n\n')
+		elif item_name not in targets.get('promotion', set()) and item_name in exclusions.get('global', set()):
+			valid = False
+			print(f'\n\n######################### {item_name} NOT VALID - Global Exclusions, No Promotion Target #########################\n\n')
+	elif item_name in exclusions.get('global', set()):
+		valid = False
+		print(f'\n\n######################### {item_name} NOT VALID - Global Exclusions No Targets #########################\n\n')
+	return valid
+
 def prep_item_for_promotion(item, promote_to, promote_from, days, custom_items, item_path, exclusions=None, targets=None):
 	changed_promote_to = False
 	try:
@@ -461,7 +475,8 @@ def prep_item_for_promotion(item, promote_to, promote_from, days, custom_items, 
 		if "promote_from" in custom_items[item_name] and type(custom_items[item_name]["promote_from"]) == list and len(custom_items[item_name]["promote_from"]) > 0:
 			promote_from = custom_items[item_name]["promote_from"]
 	# check if eligable for promotion based on current catalogs
-	if (not targets or item_name in targets) and (not exclusions or not item_name in exclusions):
+	# if (not targets or item_name in targets) and (not exclusions or not item_name in exclusions):
+	if is_valid_target(item_name, exclusions, targets):
 		if set(item_catalogs) == set(promote_from): # convert to set so order doesn't matter
 			# check if eligable for promotion based on days
 			today = datetime.datetime.now()
