@@ -1,3 +1,4 @@
 .DS_Store
 reset_munki_repo.sh
 /.venv
+config.yml
