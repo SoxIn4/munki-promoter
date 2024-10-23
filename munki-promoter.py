@@ -340,15 +340,23 @@ def prep_all_promotions(config, munki_path, config_path):
 						# prep individual pkginfo for promotion
 						for promotion in config["promotions"]:
 							promotion_targets = config["promotions"][promotion].get('targeted_names', None)
-							promotion_exclusions = config["promotions"][promotion].get('excluded_names', None)
+							promotion_exclusions = config["promotions"][promotion].get('excluded_names', None)		
 							if global_excluded:
-								exclusions = set(global_excluded).union(promotion_exclusions)
+								exclusions = set(global_excluded)
+								if promotion_exclusions:
+									exclusions = exclusions + promotion_exclusions
 							else:
-								exclusions = set(promotion_exclusions)
+								exclusions = None if not promotion_exclusions else set(promotion_exclusions)
 							if global_targets:
-								targets = set(global_targets).union(promotion_targets) - exclusions
+								targets = set(global_targets)
+								if promotion_targets:
+									targets = targets + promotion_targets
+								if exclusions:
+									targets = targets - exclusions
 							else:
-								targets = set(promotion_targets) - exclusions
+								targets = set(promotion_targets)
+								if exclusions:
+									targets = targets - exclusions
 							promote_to, promote_from, days, custom_items = get_promotion_info(promotion, promotions, config, config_path)
 							item_name, item_version, item_promotion, custom_promote_to = prep_item_for_promotion(pkginfo, promote_to, promote_from, days, custom_items, file, exclusions, targets)
 							if item_name: # would be None if not eligible for promotion
