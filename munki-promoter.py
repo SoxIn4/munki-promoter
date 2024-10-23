@@ -461,7 +461,7 @@ def prep_item_for_promotion(item, promote_to, promote_from, days, custom_items, 
 		if "promote_from" in custom_items[item_name] and type(custom_items[item_name]["promote_from"]) == list and len(custom_items[item_name]["promote_from"]) > 0:
 			promote_from = custom_items[item_name]["promote_from"]
 	# check if eligable for promotion based on current catalogs
-	if (not targets or item_name in targets) and not item_name in exclusions:
+	if (not targets or item_name in targets) and (not exclusions or not item_name in exclusions):
 		if set(item_catalogs) == set(promote_from): # convert to set so order doesn't matter
 			# check if eligable for promotion based on days
 			today = datetime.datetime.now()
