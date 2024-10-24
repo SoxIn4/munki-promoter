@@ -4,22 +4,17 @@
       promote_to:
         - "testing"
       targeted_names:
-        - "MicrosoftWord365"
       days_in_catalog: 3
     testing:
       promote_to:
         - "production"
       days_in_catalog: 7
       excluded_names:
-        - "GoogleChrome"
       targeted_names:
-        - "MicrosoftTeams"
-        - "MicrosoftPowerPoint365"
   global_targeted_names:
     - "Firefox"
     - "GoogleChrome"
-  global_excluded_names:
-    - "MicrosoftWord365"
+
 
 
 
