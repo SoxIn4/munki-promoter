@@ -392,8 +392,25 @@ def prep_single_promotion(promotion, config, munki_path, config_path):
 	if config and "promotions" in config and type(config["promotions"]) == dict:
 		promotions = config["promotions"]
 		if does_promotion_exist(promotion, promotions):
+			global_targets = config.get('global_targeted_names', None)
+			global_excluded = config.get('global_excluded_names', None)
+			promotion_targets = config["promotions"][promotion].get('targeted_names', None)
+			promotion_exclusions = config["promotions"][promotion].get('excluded_names', None)
+
+			exclusions = {}
+			if global_excluded:
+				exclusions['global'] = set(global_excluded)
+			if promotion_exclusions:
+					exclusions['promotion'] = set(promotion_exclusions)
+
+			targets = {}
+			if global_targets:
+				targets['global'] = set(global_targets)
+			if promotion_targets:
+				targets['promotion'] = set(promotion_targets)
+
 			promote_to, promote_from, days, custom_items = get_promotion_info(promotion, promotions, config, config_path)
-			names, version, custom_item_descriptions, promotions = prep_pkgsinfo_single_promotion(promote_to, promote_from, days, custom_items, munki_path) 
+			names, version, custom_item_descriptions, promotions = prep_pkgsinfo_single_promotion(promote_to, promote_from, days, custom_items, munki_path, exclusions, targets) 
 			return names, version, custom_item_descriptions, promotions, promote_to
 		else:
 			# error: catalog does not exist
@@ -404,7 +421,7 @@ def prep_single_promotion(promotion, config, munki_path, config_path):
 		logging.error(f'No promotions are currently defined in {config_path}.')
 		sys.exit(1)
 
-def prep_pkgsinfo_single_promotion(promote_to, promote_from, days, custom_items, munki_path):
+def prep_pkgsinfo_single_promotion(promote_to, promote_from, days, custom_items, munki_path, exclusions, targets):
 	names = []
 	versions = []
 	promotions = []
@@ -417,7 +434,7 @@ def prep_pkgsinfo_single_promotion(promote_to, promote_from, days, custom_items,
 					# load file
 					pkginfo = plistlib.load(fp, fmt=None)
 					# prep individual pkginfo for promotion
-					item_name, item_version, item_promotion, custom_promote_to = prep_item_for_promotion(pkginfo, promote_to, promote_from, days, custom_items, file)
+					item_name, item_version, item_promotion, custom_promote_to = prep_item_for_promotion(pkginfo, promote_to, promote_from, days, custom_items, file, exclusions, targets)
 					if item_name: # would be None if not eligible for promotion
 						if custom_promote_to:
 							custom_item_descriptions["names"].append(item_name)
