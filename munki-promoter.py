@@ -268,6 +268,29 @@ def setup_slack_blocks():
 	return [header_block]
 
 # ----------------------------------------
+# 					Teams
+# ----------------------------------------
+def send_teams_webhook(teams_url, content):
+	try:
+		global certifi
+		import certifi
+	except ImportError as e:
+			logging.error(f"Certifi library could not be loaded.")
+			logging.error("You can install the necessary dependencies with 'python3 -m pip install -r requirements.txt'")
+			sys.exit(1)
+	data = json.dumps({"text": content + "\nThis message brought to you by <https://github.com/jc0b/munki-promoter|munki-promoter>.",
+                     "title": "Autopromote Results"}).encode('utf-8')
+	headers = {'Content-Type': 'application/json'}
+	req = urllib.request.Request(teams_url, data, headers)
+	resp = urllib.request.urlopen(req, context=ssl.create_default_context(cafile=certifi.where()))
+	response = resp.read()
+	if(resp.status == 200):
+		logging.info("Teams webhook sent successfully!")
+	else:
+		logging.error(f"Teams webhook could not be sent. HTTP response {resp.status}.")
+		sys.exit(1)
+
+# ----------------------------------------
 #			Markdown change log
 # ----------------------------------------
 def write_md_file(md_file, md):
@@ -666,6 +689,8 @@ def process_options():
 						help=f'Optional path to the configuration yaml file. Defaults to config.yml if not set. If config.yml does not exist, default configuration will be used.')
 	parser.add_option('--slack', '-s', dest='slack_url',
 						help=f'Optional url for Slack webhooks.')
+	parser.add_option('--teams', '-t', dest='teams_url',
+						help=f'Optional url for MS Teams webhooks.')
 	parser.add_option('--markdown', dest='markdown_path',
 						help=f'Optional file name to print markdown summary of promotions.')
 	parser.add_option('--auto', '-a', dest='auto', action='store_true',
@@ -681,10 +706,13 @@ def process_options():
 	slack_url = options.slack_url
 	if (not slack_url) and os.environ.get("SLACK_WEBHOOK"):
 		slack_url = os.environ.get("SLACK_WEBHOOK")
+	teams_url = options.teams_url
+	if (not teams_url) and os.environ.get("TEAMS_WEBHOOK"):
+		teams_url = os.environ.get("TEAMS_WEBHOOK")
 	# return based on config file option
 	if options.config_file:
-		return options.promotion, options.list, options.munki_path, options.config_file, True, slack_url, options.markdown_path, options.auto, options.reset_edit, options.set_edit, options.promote_from_days
-	return options.promotion, options.list, options.munki_path, CONFIG_FILE, False, slack_url, options.markdown_path, options.auto, options.reset_edit, options.set_edit, options.promote_from_days
+		return options.promotion, options.list, options.munki_path, options.config_file, True, slack_url,  teams_url, options.markdown_path, options.auto, options.reset_edit, options.set_edit, options.promote_from_days
+	return options.promotion, options.list, options.munki_path, CONFIG_FILE, False, slack_url, teams_url, options.markdown_path, options.auto, options.reset_edit, options.set_edit, options.promote_from_days
 
 def setup_logging():
 	logging.basicConfig(
@@ -695,7 +723,7 @@ def setup_logging():
 
 def main():
 	setup_logging()
-	promotion, show_list, munki_path, config_path, is_config_specified, slack_url, md_path, auto, reset_edit, set_edit, promote_from_days = process_options()
+	promotion, show_list, munki_path, config_path, is_config_specified, slack_url, teams_url, md_path, auto, reset_edit, set_edit, promote_from_days = process_options()
 	config = get_config(config_path, is_config_specified)
 
 	if reset_edit or set_edit or promote_from_days:
@@ -742,6 +770,9 @@ def main():
 				if md_path:
 					md = md_description(promotion, promote_to, names, versions, custom_item_descriptions)
 					write_md_file(md_path, md)
+				if teams_url:
+					content = md_description(promotion, promote_to, names, versions, custom_item_descriptions)
+					send_teams_webhook(teams_url, content)
 			else:
 				logging.info('Ok, aborted..')
 		else:
@@ -770,6 +801,12 @@ def main():
 						if promotion in names_dict:
 							md += md_description(promotion, promote_tos[promotion], names_dict[promotion], versions_dict[promotion], custom_item_descriptions_dict[promotion])
 					write_md_file(md_path, md)
+				if teams_url:
+					content = ""
+					for promotion in config["promotions"]: # present promotions in order of config file
+						if promotion in names_dict:
+							content += md_description(promotion, promote_tos[promotion], names_dict[promotion], versions_dict[promotion], custom_item_descriptions_dict[promotion])
+					send_teams_webhook(teams_url, content)
 			else:
 				logging.info('Ok, aborted..')
 		else:
