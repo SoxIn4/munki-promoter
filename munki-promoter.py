@@ -282,25 +282,25 @@ def write_md_file(md_file, md):
 
 
 def md_description(promotion, promote_to, names, versions, custom_item_descriptions):
-	result = f'Applied promotion "{promotion}".\n'
+	result = f'## Applied promotion: "**{promotion}**".\n'
 	if len(names) > 0:
 		if len(promote_to) > 1:
-			result += f"The following items have been automatically promoted to Munki {and_str(promote_to)} catalogs:\n"
+			result += f"The following items have been automatically promoted to Munki **{and_str(promote_to)}** catalogs:\n"
 		else:
-			result += f"The following items have been automatically promoted to Munki {promote_to[0]} catalog:\n"
+			result += f"The following items have been automatically promoted to Munki **{promote_to[0]}** catalog:\n"
 		for i, name in enumerate(names):
-			result += f"- {name}: {versions[i]}\n"
+			result += f"- *{name}*: {versions[i]}\n"
 
 	custom_names = custom_item_descriptions['names']
 	custom_versions = custom_item_descriptions['versions']
 	custom_promote_tos = custom_item_descriptions['promote_tos']
 	if len(custom_names) > 0:
-		result += "The following custom items have been automatically promoted:\n"
+		result += "### The following custom items have been automatically promoted:\n"
 		for i, name in enumerate(custom_names):
 			if len(custom_promote_tos[i]) > 1:
-				result += f"- {name}: {custom_versions[i]} (promoted to Munki {and_str(custom_promote_tos[i])} catalogs)\n"
+				result += f"- *{name}*: {custom_versions[i]} (promoted to Munki **{and_str(custom_promote_tos[i])}** catalogs)\n"
 			else:
-				result += f"- {name}: {custom_versions[i]} (promoted to Munki {and_str(custom_promote_tos[i])} catalog)\n"
+				result += f"- *{name}*: {custom_versions[i]} (promoted to Munki **{and_str(custom_promote_tos[i])}** catalog)\n"
 	result += "\n"
 	return result
 
