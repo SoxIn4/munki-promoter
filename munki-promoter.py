@@ -378,8 +378,8 @@ def prep_all_promotions(config, munki_path, config_path):
 								targets['promotion'] = set(promotion_targets)
 
 							promote_to, promote_from, days, custom_items = get_promotion_info(promotion, promotions, config, config_path)
-							print(f"\n\n\n\nEXCLUSIONS: {exclusions}")
-							print(f"TARGETS: {targets}\n\n\n\n\n")
+							# print(f"\n\n\n\nEXCLUSIONS: {exclusions}")
+							# print(f"TARGETS: {targets}\n\n\n\n\n")
 							item_name, item_version, item_promotion, custom_promote_to = prep_item_for_promotion(pkginfo, promote_to, promote_from, days, custom_items, file, exclusions, targets)
 							if item_name: # would be None if not eligible for promotion
 								if not (promotion in names):
@@ -481,19 +481,19 @@ def is_valid_target(item_name, exclusions, targets):
 	valid = True
 	if item_name in exclusions.get('promotion', set()):
 		valid = False
-		print(f'\n\n######################### {item_name} NOT VALID - Promotion Exclusions #########################\n\n')
+		print(f'######################### {item_name} NOT VALID - Promotion Exclusions #########################\n\n')
 	elif targets:
 		if item_name not in (targets.get('global', set()).union(targets.get('promotion', set()))):
 			valid = False
-			print(f'\n\n######################### {item_name} NOT VALID - Not in Targets #########################')
-			print(f'######################### Targets: {targets} #########################')
-			print(f'######################### Exclusions: {exclusions} #########################\n\n')
+			print(f'######################### {item_name} NOT VALID - Not in Targets #########################')
+			# print(f'######################### Targets: {targets} #########################')
+			# print(f'######################### Exclusions: {exclusions} #########################\n\n')
 		elif item_name not in targets.get('promotion', set()) and item_name in exclusions.get('global', set()):
 			valid = False
-			print(f'\n\n######################### {item_name} NOT VALID - Global Exclusions, No Promotion Target #########################\n\n')
+			print(f'\n######################### {item_name} NOT VALID - Global Exclusions, No Promotion Target #########################\n\n')
 	elif item_name in exclusions.get('global', set()):
 		valid = False
-		print(f'\n\n######################### {item_name} NOT VALID - Global Exclusions No Targets #########################\n\n')
+		print(f'\n######################### {item_name} NOT VALID - Global Exclusions No Targets #########################\n\n')
 	return valid
 
 def prep_item_for_promotion(item, promote_to, promote_from, days, custom_items, item_path, exclusions=None, targets=None):
